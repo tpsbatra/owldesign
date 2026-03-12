@@ -1,0 +1,1442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>OwlDesign · AI Design Studio</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --ink: #0E0E0E;
+  --paper: #F5F0E8;
+  --cream: #EDE7D9;
+  --warm: #C4472A;
+  --blue: #2C5F8A;
+  --gold: #B8860B;
+  --teal: #1B7A6E;
+  --muted: #8A8178;
+  --border: rgba(139,121,90,0.2);
+  --card: rgba(255,255,255,0.7);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--paper);color:var(--ink);min-height:100vh}
+input,select,textarea,button{font-family:'DM Sans',sans-serif}
+
+/* Grain overlay */
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;z-index:1000;opacity:0.4}
+
+.screen{display:none;min-height:100vh}
+.screen.active{display:flex}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:var(--cream)}
+::-webkit-scrollbar-thumb{background:var(--warm);border-radius:2px}
+
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{opacity:0.3;transform:scale(0.8)}50%{opacity:1;transform:scale(1.2)}}
+@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+
+.fade-up{animation:fadeUp 0.5s ease forwards}
+
+/* PASSWORD SCREEN */
+.pwd-screen{flex-direction:column;align-items:center;justify-content:center;background:var(--ink);position:relative;overflow:hidden}
+.pwd-screen::after{content:'';position:absolute;width:600px;height:600px;border-radius:50%;background:radial-gradient(circle,rgba(196,71,42,0.08) 0%,transparent 70%);top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none}
+.owl-logo{font-family:'Cormorant Garamond',serif;font-size:36px;font-weight:700;letter-spacing:3px;margin-bottom:8px}
+.owl-logo span.o{color:var(--warm)}
+.owl-logo span.d{color:#6A9EC5}
+.pwd-sub{font-size:10px;letter-spacing:4px;text-transform:uppercase;color:#555;margin-bottom:48px}
+.pwd-input-wrap{position:relative;margin-bottom:12px}
+.pwd-input{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:4px;padding:16px 28px;color:#fff;font-size:28px;text-align:center;letter-spacing:14px;width:200px;outline:none;transition:border 0.3s}
+.pwd-input:focus{border-color:rgba(196,71,42,0.5)}
+.pwd-error{color:var(--warm);font-size:11px;letter-spacing:1px;text-transform:uppercase;margin-bottom:12px;display:none}
+.pwd-btn{background:var(--warm);border:none;border-radius:3px;padding:14px 44px;color:#fff;font-weight:600;font-size:13px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all 0.2s}
+.pwd-btn:hover{background:#a8391f}
+.pwd-footer{position:absolute;bottom:24px;font-size:10px;letter-spacing:3px;text-transform:uppercase;color:#333}
+.pwd-footer span{color:var(--warm)}
+
+/* LANDING SCREEN */
+.landing-screen{flex-direction:column;align-items:center;justify-content:center;background:var(--ink);position:relative;overflow:hidden;text-align:center;padding:40px 20px}
+.landing-bg{position:absolute;inset:0;background:radial-gradient(ellipse at 20% 50%,rgba(196,71,42,0.06) 0%,transparent 60%),radial-gradient(ellipse at 80% 50%,rgba(44,95,138,0.06) 0%,transparent 60%)}
+.landing-content{position:relative;z-index:2}
+.landing-eyebrow{font-size:10px;letter-spacing:5px;text-transform:uppercase;color:#444;margin-bottom:20px}
+.landing-title{font-family:'Cormorant Garamond',serif;font-size:clamp(52px,8vw,96px);font-weight:400;color:#fff;line-height:0.95;margin-bottom:8px}
+.landing-title em{color:var(--warm);font-style:italic}
+.landing-title .blue{color:#6A9EC5}
+.landing-sub{font-size:14px;color:#666;max-width:400px;line-height:1.9;margin:24px auto 48px}
+.landing-btn{background:transparent;border:1px solid rgba(196,71,42,0.4);border-radius:3px;padding:16px 52px;color:#fff;font-size:13px;letter-spacing:3px;text-transform:uppercase;cursor:pointer;transition:all 0.3s;position:relative;overflow:hidden}
+.landing-btn::before{content:'';position:absolute;inset:0;background:var(--warm);transform:scaleX(0);transform-origin:left;transition:transform 0.3s ease}
+.landing-btn:hover::before{transform:scaleX(1)}
+.landing-btn span{position:relative;z-index:1}
+.landing-footer{position:absolute;bottom:24px;font-size:10px;letter-spacing:3px;text-transform:uppercase;color:#333}
+.landing-footer span{color:var(--warm)}
+
+/* STUDIO SCREEN */
+.studio-screen{flex-direction:column;background:var(--paper)}
+
+/* Nav */
+.studio-nav{display:flex;align-items:center;justify-content:space-between;padding:14px 32px;border-bottom:1px solid var(--border);background:rgba(245,240,232,0.9);backdrop-filter:blur(12px);position:sticky;top:0;z-index:100;flex-wrap:wrap;gap:8px}
+.nav-logo{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:700;letter-spacing:2px;cursor:pointer}
+.nav-logo span.o{color:var(--warm)}
+.nav-logo span.d{color:var(--blue)}
+.nav-tag{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--muted)}
+.nav-home{background:transparent;border:1px solid var(--border);border-radius:3px;padding:7px 16px;color:var(--muted);font-size:11px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all 0.2s}
+.nav-home:hover{border-color:var(--warm);color:var(--warm)}
+
+/* Main layout */
+.studio-body{max-width:1200px;margin:0 auto;padding:32px 24px;width:100%}
+
+/* Quick fill bar */
+.quick-fill{display:flex;align-items:center;gap:12px;margin-bottom:28px;flex-wrap:wrap;padding:14px 20px;background:rgba(255,255,255,0.5);border:1px solid var(--border);border-radius:6px}
+.quick-fill-label{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+.quick-select{background:var(--cream);border:1px solid var(--border);border-radius:4px;padding:8px 14px;color:var(--ink);font-size:12px;outline:none;flex:1;min-width:200px;max-width:360px;cursor:pointer}
+.quick-select:focus{border-color:var(--warm)}
+.quick-confirm{font-size:11px;color:var(--teal);font-weight:600;letter-spacing:1px;display:none}
+
+/* Two-column layout */
+.studio-grid{display:grid;grid-template-columns:340px 1fr;gap:0;background:rgba(255,255,255,0.4);border:1px solid var(--border);border-radius:8px;overflow:hidden}
+
+/* Input panel */
+.input-panel{padding:24px;border-right:1px solid var(--border);background:rgba(255,255,255,0.3)}
+.panel-heading{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:20px;padding-bottom:10px;border-bottom:1px solid var(--border)}
+
+.lbl{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:5px;display:block;font-weight:500}
+.field{margin-bottom:14px}
+.inp{background:var(--cream);border:1px solid var(--border);border-radius:4px;padding:10px 14px;color:var(--ink);font-size:13px;outline:none;width:100%;transition:border 0.2s;line-height:1.4}
+.inp:focus{border-color:var(--warm)}
+textarea.inp{resize:vertical;min-height:60px;line-height:1.6}
+select.inp{cursor:pointer}
+select.inp option{background:#fff}
+
+.run-btn{width:100%;padding:14px;border-radius:4px;border:none;color:#fff;font-weight:600;font-size:13px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;background:var(--warm);transition:all 0.2s;display:flex;align-items:center;justify-content:center;gap:10px;margin-top:8px}
+.run-btn:hover{background:#a8391f}
+.run-btn:disabled{opacity:0.5;cursor:not-allowed}
+
+/* Output panel */
+.output-panel{padding:28px;min-height:600px}
+
+/* Placeholder */
+.output-placeholder{display:flex;flex-direction:column;align-items:center;justify-content:center;height:500px;text-align:center;gap:12px}
+.placeholder-owl{font-family:'Cormorant Garamond',serif;font-size:64px;color:var(--warm);opacity:0.15;line-height:1}
+.placeholder-text{font-size:13px;color:var(--muted);letter-spacing:1px}
+
+/* Loading */
+.output-loading{display:none;flex-direction:column;align-items:center;justify-content:center;height:500px;gap:20px}
+.loading-title{font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--ink);font-style:italic}
+.dots{display:flex;gap:8px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--warm);animation:pulse 1.2s infinite}
+.dot:nth-child(2){animation-delay:0.2s}
+.dot:nth-child(3){animation-delay:0.4s}
+
+/* Output sections */
+.output-sections{display:none}
+
+/* Section wrapper */
+.section{margin-bottom:36px;padding-bottom:36px;border-bottom:1px solid var(--border)}
+.section:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
+.section-number{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--warm);margin-bottom:4px}
+.section-title{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:600;color:var(--ink);margin-bottom:16px;line-height:1.1}
+
+/* Concept card */
+.concept-card{background:var(--ink);border-radius:6px;padding:28px;color:#fff;position:relative;overflow:hidden}
+.concept-card::before{content:'';position:absolute;top:-40px;right:-40px;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,rgba(196,71,42,0.12) 0%,transparent 70%)}
+.concept-name{font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:600;color:var(--warm);margin-bottom:4px;font-style:italic}
+.concept-type{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:#555;margin-bottom:16px}
+.concept-narrative{font-size:14px;line-height:1.9;color:#ccc;margin-bottom:20px}
+.concept-pitch{font-family:'Cormorant Garamond',serif;font-size:18px;font-style:italic;color:#aaa;border-left:2px solid var(--warm);padding-left:16px}
+
+/* Specs grid */
+.specs-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
+.spec-item{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:4px;padding:10px 14px}
+.spec-label{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:#555;margin-bottom:3px}
+.spec-value{font-size:13px;color:#ddd;line-height:1.5}
+
+/* Materials */
+.material-row{display:flex;gap:12px;margin-bottom:10px;padding:12px 14px;background:rgba(255,255,255,0.5);border:1px solid var(--border);border-radius:4px;align-items:flex-start}
+.material-tier{width:60px;flex-shrink:0}
+.material-tier-label{font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:2px}
+.material-tier-dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+.material-content{flex:1}
+.material-name{font-size:13px;font-weight:600;color:var(--ink);margin-bottom:2px}
+.material-detail{font-size:12px;color:var(--muted);line-height:1.5}
+
+/* Colour palette */
+.palette-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.colour-tile{border-radius:6px;overflow:hidden;border:1px solid var(--border)}
+.colour-swatch{height:80px;width:100%}
+.colour-info{padding:10px 12px;background:rgba(255,255,255,0.6)}
+.colour-name{font-size:12px;font-weight:600;color:var(--ink);margin-bottom:2px}
+.colour-hex{font-size:11px;color:var(--muted);font-family:monospace;margin-bottom:4px}
+.colour-use{font-size:10px;color:var(--muted);letter-spacing:0.5px}
+
+/* BOM table */
+.bom-table{width:100%;border-collapse:collapse;font-size:12px}
+.bom-table th{background:var(--ink);color:#fff;padding:10px 14px;text-align:left;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;font-weight:500}
+.bom-table td{padding:10px 14px;border-bottom:1px solid var(--border);color:var(--ink);vertical-align:top;line-height:1.5}
+.bom-table tr:nth-child(even) td{background:rgba(255,255,255,0.4)}
+.bom-table tr:hover td{background:rgba(196,71,42,0.04)}
+.cost-cell{font-weight:600;color:var(--teal)}
+.tier-badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;letter-spacing:0.5px}
+.tier-premium{background:rgba(184,134,11,0.12);color:var(--gold);border:1px solid rgba(184,134,11,0.25)}
+.tier-standard{background:rgba(27,122,110,0.1);color:var(--teal);border:1px solid rgba(27,122,110,0.25)}
+
+/* Moodboard */
+.moodboard-btn{background:transparent;border:1px solid var(--warm);border-radius:4px;padding:12px 28px;color:var(--warm);font-size:12px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;gap:8px;font-family:'DM Sans',sans-serif}
+.moodboard-btn:hover{background:var(--warm);color:#fff}
+.moodboard-btn:disabled{opacity:0.5;cursor:not-allowed}
+.moodboard-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px}
+.moodboard-img-wrap{border-radius:6px;overflow:hidden;border:1px solid var(--border);position:relative;background:var(--cream)}
+.moodboard-img-wrap img{width:100%;height:180px;object-fit:cover;display:block}
+.moodboard-label{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,0.6));padding:8px 10px;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,0.7)}
+.moodboard-loading{height:180px;display:flex;align-items:center;justify-content:center;background:var(--cream);color:var(--muted);font-size:12px;letter-spacing:1px}
+.moodboard-disclaimer{font-size:11px;color:var(--muted);margin-top:10px;font-style:italic}
+
+/* AI Tools */
+.tools-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tool-card{background:rgba(255,255,255,0.5);border:1px solid var(--border);border-radius:6px;padding:14px 16px;transition:border-color 0.2s}
+.tool-card:hover{border-color:var(--warm)}
+.tool-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.tool-name{font-size:13px;font-weight:600;color:var(--ink)}
+.tool-badge{font-size:9px;padding:2px 8px;border-radius:10px;font-weight:700;letter-spacing:0.5px}
+.badge-free{background:rgba(27,122,110,0.1);color:var(--teal);border:1px solid rgba(27,122,110,0.25)}
+.badge-paid{background:rgba(196,71,42,0.1);color:var(--warm);border:1px solid rgba(196,71,42,0.25)}
+.badge-freemium{background:rgba(184,134,11,0.1);color:var(--gold);border:1px solid rgba(184,134,11,0.25)}
+.tool-desc{font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:6px}
+.tool-use{font-size:11px;color:var(--blue);font-style:italic}
+
+/* CAD tools - same grid */
+.cad-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+/* Path to market */
+.market-content{font-size:13px;line-height:1.9;color:var(--ink)}
+.market-content pre{white-space:pre-wrap;word-break:break-word;font-family:'DM Sans',sans-serif;font-size:13px;line-height:1.9;color:var(--ink)}
+
+/* Pitch pack */
+.pitch-block{background:rgba(255,255,255,0.5);border:1px solid var(--border);border-radius:6px;padding:18px;margin-bottom:12px}
+.pitch-block-label{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+.pitch-text{font-size:13px;line-height:1.8;color:var(--ink);white-space:pre-wrap;word-break:break-word}
+.wa-preview{background:#128C7E;border-radius:12px;padding:16px;margin-top:10px}
+.wa-bubble{background:#005C4B;border-radius:12px 12px 3px 12px;padding:12px 16px;max-width:85%;font-size:13px;line-height:1.65;color:#e8e8e8;margin-left:auto}
+.wa-time{font-size:10px;color:rgba(255,255,255,0.4);text-align:right;margin-top:4px}
+
+/* Midjourney prompt */
+.mj-prompt-box{background:var(--ink);border-radius:6px;padding:16px 20px;font-family:monospace;font-size:12px;color:#9CA;line-height:1.6;position:relative;word-break:break-all}
+.mj-copy{position:absolute;top:10px;right:10px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:3px;padding:4px 10px;color:#aaa;font-size:10px;cursor:pointer;font-family:'DM Sans',sans-serif;letter-spacing:1px;transition:all 0.2s}
+.mj-copy:hover{background:rgba(255,255,255,0.15);color:#fff}
+
+/* Copy button */
+.copy-btn{background:transparent;border:1px solid var(--border);border-radius:3px;padding:7px 16px;color:var(--muted);font-size:11px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all 0.2s;margin-top:10px;font-family:'DM Sans',sans-serif}
+.copy-btn:hover{border-color:var(--warm);color:var(--warm)}
+
+/* Action bar */
+.action-bar{display:flex;gap:10px;margin-top:28px;padding-top:20px;border-top:1px solid var(--border);flex-wrap:wrap}
+.action-btn{padding:11px 24px;border-radius:3px;font-size:11px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all 0.2s;font-family:'DM Sans',sans-serif;font-weight:600}
+.btn-primary{background:var(--warm);border:none;color:#fff}
+.btn-primary:hover{background:#a8391f}
+.btn-outline{background:transparent;border:1px solid var(--border);color:var(--muted)}
+.btn-outline:hover{border-color:var(--ink);color:var(--ink)}
+
+/* Responsive */
+@media(max-width:900px){
+  .studio-grid{grid-template-columns:1fr}
+  .input-panel{border-right:none;border-bottom:1px solid var(--border)}
+  .tools-grid,.cad-grid,.palette-grid{grid-template-columns:1fr}
+  .specs-grid{grid-template-columns:1fr}
+  .moodboard-grid{grid-template-columns:1fr 1fr}
+}
+@media(max-width:600px){
+  .studio-body{padding:16px}
+  .moodboard-grid{grid-template-columns:1fr}
+  .studio-nav{padding:12px 16px}
+}
+
+/* Print */
+@media print{
+  .studio-nav,.input-panel,.run-btn,.moodboard-btn,.action-bar,.copy-btn,.mj-copy{display:none!important}
+  .studio-grid{grid-template-columns:1fr!important}
+  body{background:#fff!important}
+  .output-sections{display:block!important}
+  .concept-card{background:#1a1a1a!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+</style>
+</head>
+<body>
+
+<!-- PASSWORD SCREEN -->
+<div class="screen active pwd-screen" id="s-password">
+  <div style="position:relative;z-index:2;text-align:center">
+    <div class="owl-logo"><span class="o">Owl</span><span class="d">Design</span></div>
+    <div class="pwd-sub">AI Design Studio</div>
+
+    <!-- Access code — always shown -->
+    <div style="margin-bottom:6px">
+      <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#444;margin-bottom:8px">Access Code</div>
+      <input type="password" id="pwd-input" class="pwd-input" placeholder="••••" maxlength="10"
+        onkeydown="if(event.key==='Enter')handlePwd()"/>
+    </div>
+
+    <!-- API key — only shown on hosted (GitHub / Firebase etc) -->
+    <div id="apikey-wrap" style="display:none;margin-bottom:6px;margin-top:16px">
+      <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#444;margin-bottom:8px">Anthropic API Key</div>
+      <input type="password" id="apikey-input" placeholder="sk-ant-••••••••"
+        style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:4px;padding:12px 16px;color:#fff;font-size:13px;letter-spacing:2px;width:280px;outline:none;transition:border 0.3s;font-family:monospace"
+        onkeydown="if(event.key==='Enter')handlePwd()"/>
+      <div style="font-size:9px;color:#444;margin-top:6px;letter-spacing:1px">Stored in memory only · never saved</div>
+    </div>
+
+    <div id="pwd-error" class="pwd-error">Incorrect code</div>
+    <div id="apikey-error" class="pwd-error" style="display:none">API key required (sk-ant-…)</div>
+    <br/>
+    <button class="pwd-btn" onclick="handlePwd()">Enter Studio</button>
+  </div>
+  <div class="pwd-footer">POWERED BY <span>DATA OWL</span></div>
+</div>
+
+<!-- LANDING SCREEN -->
+<div class="screen landing-screen" id="s-landing">
+  <div class="landing-bg"></div>
+  <div class="landing-content">
+    <div class="landing-eyebrow">Data Owl · Ascent Business Forum</div>
+    <div class="landing-title">
+      <em>Owl</em><span class="blue">Design</span>
+    </div>
+    <div class="landing-title" style="font-size:clamp(18px,3vw,32px);color:#555;margin-top:4px">AI Design Studio</div>
+    <p class="landing-sub">From concept brief to client-ready deliverable. Materials, moodboard, BOM, and path to market — in one flow.</p>
+    <button class="landing-btn" onclick="showScreen('s-studio')"><span>Open Studio →</span></button>
+  </div>
+  <div class="landing-footer">POWERED BY <span>DATA OWL</span></div>
+</div>
+
+<!-- STUDIO SCREEN -->
+<div class="screen studio-screen" id="s-studio">
+
+  <!-- Nav -->
+  <div class="studio-nav">
+    <div class="nav-logo" onclick="showScreen('s-landing')"><span class="o">Owl</span><span class="d">Design</span></div>
+    <span class="nav-tag">AI Design Studio · Ascent Business Forum</span>
+    <button class="nav-home" onclick="showScreen('s-landing')">← Home</button>
+  </div>
+
+  <div class="studio-body">
+
+    <!-- Quick Fill -->
+    <div class="quick-fill">
+      <span class="quick-fill-label">Quick fill for</span>
+      <select id="participant-select" class="quick-select" onchange="handleParticipant(this.value)">
+        <option value="0">— Select participant —</option>
+        <option value="1">Kunal Mehta · Furniture Design</option>
+        <option value="2">Abhimanyu · Metals &amp; Trade</option>
+        <option value="3">Aleem · Advertising</option>
+        <option value="4">Sidharth · Textile Mfg</option>
+      </select>
+      <span id="participant-confirm" class="quick-confirm">✓ Inputs updated</span>
+    </div>
+
+    <!-- Studio Grid -->
+    <div class="studio-grid">
+
+      <!-- INPUT PANEL -->
+      <div class="input-panel">
+        <div class="panel-heading">Design Brief</div>
+
+        <div class="field">
+          <label class="lbl">Furniture Type</label>
+          <input class="inp" id="f-dtype" value="Executive lounge chair"/>
+        </div>
+        <div class="field">
+          <label class="lbl">Style Direction</label>
+          <select class="inp" id="f-style">
+            <option>Japandi (minimalist + warm wood)</option>
+            <option>Mid-century modern</option>
+            <option>Industrial chic</option>
+            <option>Contemporary Indian luxury</option>
+            <option>Scandinavian minimalist</option>
+            <option>Art Deco revival</option>
+            <option>Wabi-sabi natural</option>
+          </select>
+        </div>
+        <div class="field">
+          <label class="lbl">Client Profile</label>
+          <input class="inp" id="f-dclient" value="Senior architect, luxury villa in Pune"/>
+        </div>
+        <div class="field">
+          <label class="lbl">Budget Tier</label>
+          <select class="inp" id="f-budget">
+            <option>Premium (Rs.1–3L)</option>
+            <option>Luxury (Rs.3–8L)</option>
+            <option>Ultra-luxury (Rs.8L+)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label class="lbl">Key Materials Preference</label>
+          <input class="inp" id="f-materials" placeholder="e.g. solid teak, Italian leather..." value=""/>
+        </div>
+        <div class="field">
+          <label class="lbl">Special Requirements</label>
+          <textarea class="inp" id="f-notes" placeholder="Any specific requirements, constraints, or context..."></textarea>
+        </div>
+
+        <button class="run-btn" id="run-btn" onclick="runStudio()">
+          ✦ &nbsp;Generate Design
+        </button>
+      </div>
+
+      <!-- OUTPUT PANEL -->
+      <div class="output-panel">
+
+        <!-- Placeholder -->
+        <div class="output-placeholder" id="output-placeholder">
+          <div class="placeholder-owl">✦</div>
+          <div class="placeholder-text">Fill the brief and generate your design concept</div>
+        </div>
+
+        <!-- Loading -->
+        <div class="output-loading" id="output-loading">
+          <div class="loading-title">Crafting your design concept…</div>
+          <div class="dots">
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+          </div>
+          <div style="font-size:12px;color:var(--muted);letter-spacing:1px">This takes about 15 seconds</div>
+        </div>
+
+        <!-- Output sections -->
+        <div class="output-sections fade-up" id="output-sections">
+
+          <!-- S1: Concept Card -->
+          <div class="section" id="sec-concept">
+            <div class="section-number">01</div>
+            <div class="section-title">Design Concept</div>
+            <div class="concept-card" id="concept-card">
+              <div class="concept-name" id="concept-name">—</div>
+              <div class="concept-type" id="concept-type">Design Concept</div>
+              <div class="concept-narrative" id="concept-narrative"></div>
+              <div class="specs-grid" id="specs-grid"></div>
+              <div style="margin-top:20px">
+                <div style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:#555;margin-bottom:8px">Signature Features</div>
+                <div id="concept-features" style="font-size:13px;color:#bbb;line-height:1.8"></div>
+              </div>
+              <div class="concept-pitch" id="concept-pitch" style="margin-top:20px"></div>
+            </div>
+          </div>
+
+          <!-- S2: Colour Palette -->
+          <div class="section" id="sec-palette">
+            <div class="section-number">02</div>
+            <div class="section-title">Colour Palette</div>
+            <div class="palette-grid" id="palette-grid"></div>
+          </div>
+
+          <!-- S3: Materials -->
+          <div class="section" id="sec-materials">
+            <div class="section-number">03</div>
+            <div class="section-title">Materials Specification</div>
+            <div id="materials-list"></div>
+          </div>
+
+          <!-- S4: BOM -->
+          <div class="section" id="sec-bom">
+            <div class="section-number">04</div>
+            <div class="section-title">Bill of Materials</div>
+            <div style="overflow-x:auto">
+              <table class="bom-table" id="bom-table">
+                <thead>
+                  <tr>
+                    <th>Material</th>
+                    <th>Specification</th>
+                    <th>Qty</th>
+                    <th>Source City</th>
+                    <th>Est. Cost</th>
+                    <th>Tier</th>
+                  </tr>
+                </thead>
+                <tbody id="bom-tbody"></tbody>
+              </table>
+            </div>
+            <div id="bom-total" style="text-align:right;margin-top:12px;font-size:13px;font-weight:600;color:var(--teal)"></div>
+          </div>
+
+          <!-- S5: Moodboard -->
+          <div class="section" id="sec-moodboard">
+            <div class="section-number">05</div>
+            <div class="section-title">Style Reference Moodboard</div>
+            <div style="margin-bottom:16px">
+              <div id="mj-prompt-section" style="margin-bottom:16px">
+                <div class="lbl" style="margin-bottom:8px">Midjourney Prompt — copy &amp; paste directly</div>
+                <div class="mj-prompt-box" id="mj-prompt-box">
+                  <button class="mj-copy" onclick="copyMjPrompt()">Copy</button>
+                  <span id="mj-prompt-text"></span>
+                </div>
+              </div>
+              <button class="moodboard-btn" id="moodboard-btn" onclick="generateMoodboard()">
+                ✦ Generate Visual Moodboard
+              </button>
+              <div style="font-size:11px;color:var(--muted);margin-top:8px;font-style:italic">Canvas illustrations drawn from your concept — concept silhouette, colour study, and room context</div>
+            </div>
+            <div class="moodboard-grid" id="moodboard-grid" style="display:none"></div>
+          </div>
+
+          <!-- S6: AI Visualisation Tools -->
+          <div class="section" id="sec-aitools">
+            <div class="section-number">06</div>
+            <div class="section-title">AI Tools to Visualise &amp; Refine</div>
+            <div class="tools-grid" id="ai-tools-grid"></div>
+          </div>
+
+          <!-- S7: CAD & Production Tools -->
+          <div class="section" id="sec-cad">
+            <div class="section-number">07</div>
+            <div class="section-title">CAD &amp; Production Tools</div>
+            <div class="cad-grid" id="cad-tools-grid"></div>
+          </div>
+
+          <!-- S8: Path to Market -->
+          <div class="section" id="sec-market">
+            <div class="section-number">08</div>
+            <div class="section-title">Path to Market</div>
+            <div class="market-content" id="market-content"></div>
+          </div>
+
+          <!-- S9: Client Pitch Pack -->
+          <div class="section" id="sec-pitch">
+            <div class="section-number">09</div>
+            <div class="section-title">Client Pitch Pack</div>
+            <div id="pitch-content"></div>
+          </div>
+
+          <!-- Action bar -->
+          <div class="action-bar">
+            <button class="action-btn btn-primary" onclick="window.print()">🖨 Print / Save PDF</button>
+            <button class="action-btn btn-outline" onclick="downloadBrief()">⬇ Download Brief</button>
+            <button class="action-btn btn-outline" onclick="resetStudio()">↺ New Design</button>
+          </div>
+
+        </div><!-- /output-sections -->
+      </div><!-- /output-panel -->
+    </div><!-- /studio-grid -->
+  </div><!-- /studio-body -->
+</div><!-- /studio-screen -->
+
+<script>
+// ─── State ───────────────────────────────────────────────
+let currentDesignData = null;
+let currentMjPrompt = '';
+let currentBriefInputs = {};
+
+// ─── Participants ─────────────────────────────────────────
+const PARTICIPANTS = {
+  1: { dtype:'Executive lounge chair', style:'Japandi (minimalist + warm wood)', dclient:'Senior architect, luxury villa in Pune', budget:'Luxury (Rs.3–8L)', materials:'Solid walnut, Italian full-grain leather', notes:'Statement piece for a private reading nook' },
+  2: { dtype:'Executive office desk', style:'Contemporary Indian luxury', dclient:'CEO of a mid-size manufacturing firm, corner office Mumbai', budget:'Luxury (Rs.3–8L)', materials:'Black granite top, solid teak legs', notes:'Needs cable management and solid presence' },
+  3: { dtype:'Conference table, 10-seater', style:'Industrial chic', dclient:'Creative agency, open-plan office Bangalore', budget:'Premium (Rs.1–3L)', materials:'Reclaimed wood top, matte black steel base', notes:'Collaborative feel, easy to reconfigure' },
+  4: { dtype:'Platform bed with storage', style:'Scandinavian minimalist', dclient:'Young professional couple, 2BHK apartment in Mumbai', budget:'Premium (Rs.1–3L)', materials:'Birch plywood, fabric upholstery', notes:'Maximise storage, low profile' },
+};
+
+function handleParticipant(idx) {
+  idx = parseInt(idx);
+  if (idx === 0) return;
+  const p = PARTICIPANTS[idx];
+  if (!p) return;
+  const map = { 'f-dtype':p.dtype,'f-style':p.style,'f-dclient':p.dclient,'f-budget':p.budget,'f-materials':p.materials,'f-notes':p.notes };
+  Object.entries(map).forEach(([id,val]) => {
+    const el = document.getElementById(id);
+    if (el && val !== undefined) {
+      // For select, find matching option
+      if (el.tagName === 'SELECT') {
+        [...el.options].forEach(o => { if(o.text === val || o.value === val) el.value = o.value; });
+      } else { el.value = val; }
+    }
+  });
+  const c = document.getElementById('participant-confirm');
+  c.style.display = 'inline';
+  setTimeout(() => c.style.display = 'none', 3000);
+}
+
+// ─── Screen nav ───────────────────────────────────────────
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+// Show API key field only on hosted environments
+window._apiKey = '';
+if (isHostedEnv()) {
+  document.getElementById('apikey-wrap').style.display = 'block';
+}
+
+function handlePwd() {
+  const pwd = document.getElementById('pwd-input').value;
+  if (pwd !== '1020') {
+    const e = document.getElementById('pwd-error');
+    e.style.display = 'block';
+    document.getElementById('pwd-input').value = '';
+    setTimeout(() => e.style.display = 'none', 3000);
+    return;
+  }
+  // On hosted env, also require API key
+  if (isHostedEnv()) {
+    const key = (document.getElementById('apikey-input').value || '').trim();
+    if (!key.startsWith('sk-ant-')) {
+      const e = document.getElementById('apikey-error');
+      e.style.display = 'block';
+      setTimeout(() => e.style.display = 'none', 3000);
+      return;
+    }
+    window._apiKey = key;
+  }
+  showScreen('s-landing');
+}
+
+// ─── Build prompts ────────────────────────────────────────
+// PROMPT 1: structured data only — short strings, no paragraphs, safe JSON
+function buildStructuredPrompt() {
+  const g = id => (document.getElementById(id)||{}).value||'';
+  const dtype = g('f-dtype'), style = g('f-style'), client = g('f-dclient'), budget = g('f-budget'), materials = g('f-materials'), notes = g('f-notes');
+  currentBriefInputs = { dtype, style, client, budget, materials, notes };
+
+  return 'You are a senior Indian furniture designer. Output ONLY a raw JSON object — no markdown, no explanation, no extra text before or after the JSON.\n\n' +
+  'Brief: ' + dtype + ' | ' + style + ' | Client: ' + client + ' | Budget: ' + budget + ' | Materials: ' + (materials||'open') + ' | Notes: ' + (notes||'none') + '\n\n' +
+  'JSON structure (all values must be short strings safe for JSON — no unescaped quotes, no newlines inside values):\n' +
+  '{"concept":{"name":"<evocative name>","narrative":"<2 sentences, story of the piece>","pitch_line":"<one sentence to close the sale>","dimensions":"H XXcm W XXcm D XXcm","timeline":"<e.g. 6-8 weeks>","client_fit":"<1 sentence why it suits this client>"},' +
+  '"features":["<feature 1>","<feature 2>","<feature 3>"],' +
+  '"colours":[{"name":"<name>","hex":"#XXXXXX","use":"<e.g. Primary upholstery>"},{"name":"<name>","hex":"#XXXXXX","use":"<e.g. Frame finish>"},{"name":"<name>","hex":"#XXXXXX","use":"<e.g. Accent detail>"}],' +
+  '"materials":[{"tier":"Primary","name":"<material>","detail":"<why chosen, finish, Indian source city>"},{"tier":"Secondary","name":"<material>","detail":"<detail>"},{"tier":"Accent","name":"<material>","detail":"<detail>"}],' +
+  '"bom":[' +
+    '{"material":"<name>","spec":"<spec>","qty":"<qty>","source":"<city>","cost":"Rs.XX,XXX","tier":"Premium"},' +
+    '{"material":"<name>","spec":"<spec>","qty":"<qty>","source":"<city>","cost":"Rs.XX,XXX","tier":"Premium"},' +
+    '{"material":"<name>","spec":"<spec>","qty":"<qty>","source":"<city>","cost":"Rs.XX,XXX","tier":"Standard"},' +
+    '{"material":"<name>","spec":"<spec>","qty":"<qty>","source":"<city>","cost":"Rs.XX,XXX","tier":"Standard"},' +
+    '{"material":"<name>","spec":"<spec>","qty":"<qty>","source":"<city>","cost":"Rs.XX,XXX","tier":"Standard"}' +
+  '],' +
+  '"bom_total":"Rs.XX,XXX estimated",' +
+  '"mj_prompt":"<midjourney prompt for this piece, style, materials, lighting -- ar 4:3 --q 2>",' +
+  '"tool_tips":{"midjourney":"<tip>","firefly":"<tip>","sketchup":"<tip>","fusion360":"<tip>","flatma":"<tip>"}}';
+}
+
+// PROMPT 2: free text sections — path to market + pitch pack
+function buildTextPrompt(d) {
+  const b = currentBriefInputs;
+  return 'Senior Indian furniture business strategist. Write for a ' + b.dtype + ' (' + b.style + ', ' + b.budget + ') for client: ' + b.client + '. Concept name: ' + d.concept.name + '.\n\n' +
+  'Write these 5 sections clearly, using plain text (no JSON, no markdown):\n\n' +
+  'PRICING STRATEGY\n' +
+  'Explain markup logic, how to price, and positioning for this budget tier. 3-4 sentences.\n\n' +
+  'TARGET BUYER\n' +
+  'Who specifically buys this in India — their profile, how to find them. 3-4 sentences.\n\n' +
+  'WHERE TO LIST\n' +
+  'Specific Indian platforms, channels, locations for this piece. 3-4 sentences.\n\n' +
+  'HOW TO PITCH\n' +
+  'Exactly what to send and say to this client type. 3-4 sentences.\n\n' +
+  'DESIGN PROTECTION\n' +
+  'What to register, how, and why for this piece. 2-3 sentences.\n\n' +
+  '---\n\n' +
+  'WHATSAPP\n' +
+  'Write a warm, professional WhatsApp pitch for this piece to this client. Max 4 lines. No subject line.\n\n' +
+  'EMAIL SUBJECT\n' +
+  'Write one compelling email subject line.\n\n' +
+  'EMAIL BODY\n' +
+  'Write a professional email pitch. Max 100 words. Include concept name, key material, price range, clear CTA.';
+}
+
+// ─── Main run ─────────────────────────────────────────────
+async function runStudio() {
+  const btn = document.getElementById('run-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<div style="width:14px;height:14px;border:2px solid rgba(255,255,255,0.3);border-top:2px solid #fff;border-radius:50%;animation:spin 0.8s linear infinite"></div>&nbsp;Generating…';
+
+  document.getElementById('output-placeholder').style.display = 'none';
+  document.getElementById('output-loading').style.display = 'flex';
+  document.getElementById('output-sections').style.display = 'none';
+
+  const callAPI = (prompt, maxTokens) => {
+    const headers = { 'Content-Type': 'application/json', 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' };
+    if (isHostedEnv() && window._apiKey) headers['x-api-key'] = window._apiKey;
+    return fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: maxTokens, messages: [{ role: 'user', content: prompt }] })
+    }).then(r => { if (!r.ok) throw new Error('API error ' + r.status); return r.json(); })
+      .then(d => (d.content||[]).map(b => b.text||'').join('').trim());
+  };
+
+  try {
+    // Call 1: structured JSON — runs fast with Haiku
+    const rawJson = await callAPI(buildStructuredPrompt(), 1800);
+
+    // Robust JSON extraction and cleaning
+    let clean = rawJson;
+    // Strip markdown fences
+    clean = clean.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/i, '').trim();
+    // Extract just the JSON object if there's surrounding text
+    const jsonMatch = clean.match(/\{[\s\S]*\}/);
+    if (jsonMatch) clean = jsonMatch[0];
+    // Remove control characters that break JSON.parse
+    clean = clean.replace(/[\u0000-\u001F\u007F]/g, m => m === '\n' || m === '\r' || m === '\t' ? m : '');
+
+    currentDesignData = JSON.parse(clean);
+
+    // Render structural sections immediately — user sees output fast
+    document.getElementById('output-loading').style.display = 'none';
+    document.getElementById('output-sections').style.display = 'block';
+    renderStructured(currentDesignData);
+
+    // Call 2: free text sections — runs in background, fills in remaining sections
+    renderTextPlaceholders();
+    const textRaw = await callAPI(buildTextPrompt(currentDesignData), 1000);
+    renderTextSections(textRaw);
+
+  } catch(e) {
+    document.getElementById('output-loading').style.display = 'none';
+    document.getElementById('output-placeholder').style.display = 'flex';
+    document.getElementById('output-placeholder').innerHTML =
+      '<div style="color:var(--warm);font-size:13px;text-align:center">⚠️ ' + e.message + '<br/><span style="color:var(--muted);font-size:12px">Please try again</span></div>';
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '✦ &nbsp;Generate Design';
+}
+
+// ─── Render structured sections (immediate) ───────────────
+function renderStructured(d) {
+  // S1: Concept
+  document.getElementById('concept-name').textContent = d.concept.name || '';
+  document.getElementById('concept-type').textContent = currentBriefInputs.dtype + ' · ' + currentBriefInputs.style;
+  document.getElementById('concept-narrative').textContent = d.concept.narrative || '';
+  document.getElementById('concept-pitch').textContent = d.concept.pitch_line || '';
+
+  const specs = [
+    { label:'Dimensions', value: d.concept.dimensions || '—' },
+    { label:'Production', value: d.concept.timeline || '—' },
+    { label:'Client Fit', value: d.concept.client_fit || '—' },
+    { label:'Budget', value: currentBriefInputs.budget },
+  ];
+  document.getElementById('specs-grid').innerHTML = specs.map(s =>
+    '<div class="spec-item"><div class="spec-label">' + s.label + '</div><div class="spec-value">' + s.value + '</div></div>'
+  ).join('');
+
+  document.getElementById('concept-features').innerHTML = (d.features||[]).map(f =>
+    '<div style="display:flex;gap:8px;margin-bottom:6px"><span style="color:var(--warm);flex-shrink:0">—</span><span>' + escapeHtml(f) + '</span></div>'
+  ).join('');
+
+  // S2: Colour Palette
+  document.getElementById('palette-grid').innerHTML = (d.colours||[]).map(c =>
+    '<div class="colour-tile">' +
+      '<div class="colour-swatch" style="background:' + (c.hex||'#ccc') + '"></div>' +
+      '<div class="colour-info">' +
+        '<div class="colour-name">' + escapeHtml(c.name||'') + '</div>' +
+        '<div class="colour-hex">' + (c.hex||'') + '</div>' +
+        '<div class="colour-use">' + escapeHtml(c.use||'') + '</div>' +
+      '</div>' +
+    '</div>'
+  ).join('');
+
+  // S3: Materials
+  const tierColors = { Primary:'#C4472A', Secondary:'#2C5F8A', Accent:'#B8860B' };
+  document.getElementById('materials-list').innerHTML = (d.materials||[]).map(m =>
+    '<div class="material-row">' +
+      '<div class="material-tier">' +
+        '<span class="material-tier-label">' + (m.tier||'') + '</span>' +
+        '<span class="material-tier-dot" style="background:' + (tierColors[m.tier]||'#888') + '"></span>' +
+      '</div>' +
+      '<div class="material-content">' +
+        '<div class="material-name">' + escapeHtml(m.name||'') + '</div>' +
+        '<div class="material-detail">' + escapeHtml(m.detail||'') + '</div>' +
+      '</div>' +
+    '</div>'
+  ).join('');
+
+  // S4: BOM
+  document.getElementById('bom-tbody').innerHTML = (d.bom||[]).map(row =>
+    '<tr>' +
+      '<td><strong>' + escapeHtml(row.material||'') + '</strong></td>' +
+      '<td>' + escapeHtml(row.spec||'') + '</td>' +
+      '<td>' + escapeHtml(row.qty||'') + '</td>' +
+      '<td>' + escapeHtml(row.source||'') + '</td>' +
+      '<td class="cost-cell">' + escapeHtml(row.cost||'') + '</td>' +
+      '<td><span class="tier-badge ' + (row.tier==='Premium'?'tier-premium':'tier-standard') + '">' + (row.tier||'') + '</span></td>' +
+    '</tr>'
+  ).join('');
+  document.getElementById('bom-total').textContent = 'Estimated Total Material Cost: ' + (d.bom_total||'');
+
+  // S5: Moodboard - Midjourney prompt
+  currentMjPrompt = d.mj_prompt || '';
+  document.getElementById('mj-prompt-text').textContent = currentMjPrompt;
+  document.getElementById('moodboard-grid').style.display = 'none';
+  document.getElementById('moodboard-grid').innerHTML = '';
+
+  // S6: AI Tools
+  const tips = d.tool_tips || {};
+  const badgeClass = { paid:'badge-paid', free:'badge-free', freemium:'badge-freemium' };
+  const aiTools = [
+    { name:'Midjourney', badge:'paid', desc:'Generate photorealistic renders from the prompt above.', tip: tips.midjourney },
+    { name:'Adobe Firefly', badge:'freemium', desc:'Visualise material textures and finishes before production.', tip: tips.firefly },
+    { name:'SketchUp Free', badge:'free', desc:'Build a 3D spatial model from your dimensions.', tip: tips.sketchup },
+    { name:'Canva', badge:'free', desc:'Build a polished client presentation deck.', tip: tips.canva },
+    { name:'Roomstyler 3D', badge:'free', desc:'Place your piece in a room and share a walkthrough link.', tip: tips.roomstyler },
+  ];
+  document.getElementById('ai-tools-grid').innerHTML = aiTools.map(t =>
+    '<div class="tool-card">' +
+      '<div class="tool-header"><div class="tool-name">' + t.name + '</div>' +
+      '<span class="tool-badge ' + (badgeClass[t.badge]||'badge-free') + '">' + t.badge.toUpperCase() + '</span></div>' +
+      '<div class="tool-desc">' + t.desc + '</div>' +
+      (t.tip ? '<div class="tool-use">💡 ' + escapeHtml(t.tip) + '</div>' : '') +
+    '</div>'
+  ).join('');
+
+  // S7: CAD Tools
+  const cadTools = [
+    { name:'Fusion 360', badge:'freemium', desc:'Full parametric 3D modelling + engineering drawings for the workshop.', tip: tips.fusion360 },
+    { name:'AutoCAD LT', badge:'paid', desc:'Industry-standard 2D technical drawings and floor plans.', tip: tips.autocad },
+    { name:'Flatma', badge:'freemium', desc:'Cabinet and joinery — generates CNC-ready cut files.', tip: tips.flatma },
+    { name:'SolidWorks', badge:'paid', desc:'Engineering-grade modelling for scaled manufacturing.', tip: tips.solidworks },
+  ];
+  document.getElementById('cad-tools-grid').innerHTML = cadTools.map(t =>
+    '<div class="tool-card">' +
+      '<div class="tool-header"><div class="tool-name">' + t.name + '</div>' +
+      '<span class="tool-badge ' + (badgeClass[t.badge]||'badge-free') + '">' + t.badge.toUpperCase() + '</span></div>' +
+      '<div class="tool-desc">' + t.desc + '</div>' +
+      (t.tip ? '<div class="tool-use">💡 ' + escapeHtml(t.tip) + '</div>' : '') +
+    '</div>'
+  ).join('');
+
+  if (window.innerWidth <= 900) {
+    document.getElementById('output-sections').scrollIntoView({ behavior:'smooth', block:'start' });
+  }
+}
+
+// ─── Show loading state for text sections ─────────────────
+function renderTextPlaceholders() {
+  const pulse = '<span style="display:inline-block;width:180px;height:12px;background:linear-gradient(90deg,var(--cream) 25%,#e8e0d0 50%,var(--cream) 75%);background-size:200% 100%;animation:shimmer 1.4s infinite;border-radius:3px"></span>';
+  document.getElementById('market-content').innerHTML = '<div style="display:flex;flex-direction:column;gap:10px">' + pulse + pulse + pulse + '</div>';
+  document.getElementById('pitch-content').innerHTML = '<div style="display:flex;flex-direction:column;gap:10px;padding:18px">' + pulse + pulse + '</div>';
+}
+
+// ─── Parse and render text sections ───────────────────────
+function renderTextSections(text) {
+  // Extract sections by heading
+  const extract = (label) => {
+    const rx = new RegExp(label + '\\s*\\n([\\s\\S]*?)(?=\\n[A-Z ]{4,}\\n|$)', 'i');
+    const m = text.match(rx);
+    return m ? m[1].trim() : '';
+  };
+
+  const pricing    = extract('PRICING STRATEGY');
+  const buyer      = extract('TARGET BUYER');
+  const listing    = extract('WHERE TO LIST');
+  const pitch      = extract('HOW TO PITCH');
+  const protection = extract('DESIGN PROTECTION');
+  const waMsg      = extract('WHATSAPP');
+  const emailSub   = extract('EMAIL SUBJECT');
+  const emailBody  = extract('EMAIL BODY');
+
+  // S8: Path to Market
+  const marketSections = [
+    { title:'Pricing Strategy', content: pricing },
+    { title:'Target Buyer', content: buyer },
+    { title:'Where to List', content: listing },
+    { title:'How to Pitch', content: pitch },
+    { title:'Design Protection', content: protection },
+  ].filter(s => s.content);
+
+  document.getElementById('market-content').innerHTML = marketSections.map(s =>
+    '<div style="margin-bottom:20px">' +
+      '<div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--warm);font-weight:600;margin-bottom:6px">' + s.title + '</div>' +
+      '<div style="font-size:13px;line-height:1.85;color:var(--ink)">' + escapeHtml(s.content) + '</div>' +
+    '</div>'
+  ).join('');
+
+  // S9: Pitch Pack
+  window._pitchWa = waMsg;
+  window._pitchEmail = emailSub + '\n\n' + emailBody;
+
+  document.getElementById('pitch-content').innerHTML =
+    '<div class="pitch-block">' +
+      '<div class="pitch-block-label">WhatsApp Message</div>' +
+      '<div class="wa-preview"><div class="wa-bubble">' +
+        '<div style="white-space:pre-wrap">' + escapeHtml(waMsg) + '</div>' +
+        '<div class="wa-time">Now \u2713\u2713</div>' +
+      '</div></div>' +
+      '<button class="copy-btn" onclick="copyPitchWa(this)">Copy WhatsApp</button>' +
+    '</div>' +
+    '<div class="pitch-block">' +
+      '<div class="pitch-block-label">Email Subject Line</div>' +
+      '<div class="pitch-text" style="font-weight:600;font-size:14px">' + escapeHtml(emailSub) + '</div>' +
+    '</div>' +
+    '<div class="pitch-block">' +
+      '<div class="pitch-block-label">Email Body</div>' +
+      '<div class="pitch-text" style="white-space:pre-wrap">' + escapeHtml(emailBody) + '</div>' +
+      '<button class="copy-btn" onclick="copyPitchEmail(this)">Copy Email</button>' +
+    '</div>';
+}
+
+// ─── V1/V2 auto-detect ────────────────────────────────────
+// In artifact sandbox hostname is '' or 'null' — on GitHub/Firebase it's a real domain
+function isHostedEnv() {
+  const h = window.location.hostname;
+  return h && h !== '' && h !== 'null' && h !== 'localhost';
+}
+
+// ─── Moodboard — V1: canvas  /  V2: Pollinations (auto) ──
+function generateMoodboard() {
+  if (!currentDesignData) return;
+  const btn = document.getElementById('moodboard-btn');
+  btn.disabled = true;
+
+  const d = currentDesignData;
+  const colours = (d.colours||[]).map(c => safeHex(c.hex, null)).filter(Boolean);
+  const c1 = colours[0]||'#C4472A', c2 = colours[1]||'#2C5F8A', c3 = colours[2]||'#B8860B';
+  const matNames = (d.materials||[]).map(m => m.name||'');
+  const dtype = (currentBriefInputs.dtype||'furniture').toLowerCase();
+
+  const grid = document.getElementById('moodboard-grid');
+  grid.style.display = 'grid';
+
+  if (isHostedEnv()) {
+    // ── V2: Pollinations images ──────────────────────────
+    btn.innerHTML = '<div style="width:12px;height:12px;border:2px solid rgba(196,71,42,0.3);border-top:2px solid var(--warm);border-radius:50%;animation:spin 0.8s linear infinite;display:inline-block;vertical-align:middle"></div>&nbsp;Generating images…';
+    const base = d.concept.name + ', ' + currentBriefInputs.dtype + ', ' + currentBriefInputs.style + ', ' + matNames.join(', ') + ', luxury Indian interior design';
+    const prompts = [
+      { label:'Concept Render', p: base + ', hero shot, warm studio lighting, photorealistic, ultra detailed' },
+      { label:'Material Detail', p: 'close up material texture, ' + matNames.join(', ') + ', luxury furniture detail, macro, soft bokeh' },
+      { label:'In Setting',     p: base + ', placed in luxury Indian interior, ambient light, editorial photography' },
+    ];
+    const seed = Math.floor(Math.random()*99999);
+    grid.innerHTML = prompts.map((item,i) =>
+      '<div class="moodboard-img-wrap" style="position:relative;background:var(--cream);min-height:180px">' +
+        '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--muted);letter-spacing:1px" id="mb-loader-'+i+'">Generating…</div>' +
+        '<img src="https://image.pollinations.ai/prompt/'+encodeURIComponent(item.p)+'?width=600&height=420&seed='+(seed+i)+'&nologo=true&model=flux" ' +
+          'style="width:100%;display:block;opacity:0;transition:opacity 0.6s" ' +
+          'onload="this.style.opacity=1;document.getElementById(\'mb-loader-'+i+'\').style.display=\'none\'" ' +
+          'onerror="document.getElementById(\'mb-loader-'+i+'\').textContent=\'Could not load — try again\'" />' +
+        '<div class="moodboard-label">'+item.label+'</div>' +
+      '</div>'
+    ).join('');
+    btn.disabled = false;
+    btn.innerHTML = '↺ Regenerate Images';
+
+  } else {
+    // ── V1: Canvas architectural drawings ───────────────
+    grid.innerHTML =
+      '<div class="moodboard-img-wrap"><canvas id="mb-c0" style="width:100%;display:block"></canvas><div class="moodboard-label">Technical Elevation · Concept Drawing</div></div>' +
+      '<div class="moodboard-img-wrap"><canvas id="mb-c1" style="width:100%;display:block"></canvas><div class="moodboard-label">Colour & Material Study</div></div>' +
+      '<div class="moodboard-img-wrap"><canvas id="mb-c2" style="width:100%;display:block"></canvas><div class="moodboard-label">Spatial Context · Room Study</div></div>';
+    setTimeout(() => {
+      drawElevation(document.getElementById('mb-c0'), dtype, c1, c2, c3, d.concept.name||'', d.concept.dimensions||'');
+      drawMaterialBoard(document.getElementById('mb-c1'), c1, c2, c3, matNames, d.colours||[]);
+      drawRoomStudy(document.getElementById('mb-c2'), dtype, c1, c2, c3, currentBriefInputs.style||'');
+      btn.disabled = false;
+      btn.innerHTML = '↺ Regenerate Visuals';
+    }, 40);
+  }
+}
+
+function setupCanvas(canvas, w, h) {
+  canvas.width = w; canvas.height = h; canvas.style.height = 'auto';
+  return canvas.getContext('2d');
+}
+
+// ── Panel 1: Technical elevation / blueprint style ────────
+function drawElevation(canvas, dtype, c1, c2, c3, name, dims) {
+  const W = 600, H = 420;
+  const ctx = setupCanvas(canvas, W, H);
+
+  // Blueprint dark background
+  ctx.fillStyle = '#0f1923'; ctx.fillRect(0,0,W,H);
+
+  // Grid — fine blueprint grid
+  ctx.strokeStyle = 'rgba(100,160,220,0.07)'; ctx.lineWidth = 1;
+  for (let x=0;x<=W;x+=20){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
+  for (let y=0;y<=H;y+=20){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+  // Heavier grid every 100px
+  ctx.strokeStyle = 'rgba(100,160,220,0.13)'; ctx.lineWidth = 1;
+  for (let x=0;x<=W;x+=100){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
+  for (let y=0;y<=H;y+=100){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+
+  // Ground line
+  ctx.strokeStyle = 'rgba(100,180,220,0.5)'; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(40,340); ctx.lineTo(560,340); ctx.stroke();
+
+  const isChair = /chair|sofa|seat|stool|bench/.test(dtype);
+  const isTable = /table|desk/.test(dtype);
+  const isBed   = /bed/.test(dtype);
+  const isShelf = /shelf|shelv|cabinet|storage/.test(dtype);
+
+  // Draw furniture as clean white-line technical elevation
+  ctx.strokeStyle = '#e8f4ff'; ctx.lineWidth = 1.5; ctx.fillStyle = 'rgba(100,160,220,0.08)';
+
+  if (isChair) {
+    // Back panel
+    ctx.beginPath(); ctx.rect(195,130,210,98); ctx.fill(); ctx.stroke();
+    // Seat
+    ctx.beginPath(); ctx.rect(185,228,230,18); ctx.fill(); ctx.stroke();
+    // Legs
+    [[200,246],[390,246]].forEach(([x,y])=>{ctx.beginPath();ctx.rect(x,y,14,94);ctx.fill();ctx.stroke();});
+    // Armrests
+    ctx.beginPath(); ctx.rect(178,190,17,50); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.rect(405,190,17,50); ctx.fill(); ctx.stroke();
+    // Cushion stitch lines (dashed)
+    ctx.setLineDash([4,4]); ctx.strokeStyle='rgba(200,230,255,0.3)';
+    ctx.beginPath(); ctx.rect(205,140,190,78); ctx.stroke();
+    ctx.beginPath(); ctx.rect(193,236,214,10); ctx.stroke();
+    ctx.setLineDash([]);
+    // Dimension arrows
+    drawDimArrow(ctx, 178,355, 422,355, dims||'~85cm W');
+    drawDimArrow(ctx, 30,130, 30,340, '~90cm H', true);
+
+  } else if (isTable) {
+    // Tabletop
+    ctx.beginPath(); ctx.rect(100,190,400,18); ctx.fill(); ctx.stroke();
+    // Legs
+    [[118,208],[462,208]].forEach(([x,y])=>{ctx.beginPath();ctx.rect(x,y,16,132);ctx.fill();ctx.stroke();});
+    // Stretcher
+    ctx.beginPath(); ctx.rect(134,295,332,10); ctx.fill(); ctx.stroke();
+    // Top surface hatching (wood grain)
+    ctx.strokeStyle='rgba(200,230,255,0.15)'; ctx.lineWidth=0.8;
+    for(let i=0;i<10;i++){ctx.beginPath();ctx.moveTo(100+i*40,190);ctx.lineTo(100+i*40,208);ctx.stroke();}
+    ctx.strokeStyle = '#e8f4ff'; ctx.lineWidth = 1.5;
+    drawDimArrow(ctx,100,355,500,355,dims||'~160cm W');
+    drawDimArrow(ctx,40,190,40,340,'~75cm H',true);
+
+  } else if (isBed) {
+    // Base
+    ctx.beginPath(); ctx.rect(80,248,440,80); ctx.fill(); ctx.stroke();
+    // Headboard
+    ctx.beginPath(); ctx.rect(80,130,440,122); ctx.fill(); ctx.stroke();
+    // Mattress outline
+    ctx.setLineDash([5,4]); ctx.strokeStyle='rgba(200,230,255,0.4)';
+    ctx.beginPath(); ctx.rect(90,218,420,34); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.strokeStyle='#e8f4ff';
+    // Pillow outlines
+    [[105,152],[310,152]].forEach(([x,y])=>{ctx.beginPath();ctx.rect(x,y,158,50);ctx.fill();ctx.stroke();});
+    drawDimArrow(ctx,80,355,520,355,dims||'~180cm W');
+    drawDimArrow(ctx,32,130,32,328,'~100cm H',true);
+
+  } else if (isShelf) {
+    // Side panels
+    [[140,80],[444,80]].forEach(([x,y])=>{ctx.beginPath();ctx.rect(x,y,16,256);ctx.fill();ctx.stroke();});
+    // Shelves
+    [80,148,216,284,336].forEach(y=>{ctx.beginPath();ctx.rect(140,y,320,12);ctx.fill();ctx.stroke();});
+    // Back panel
+    ctx.strokeStyle='rgba(200,230,255,0.2)';ctx.lineWidth=0.8;
+    ctx.beginPath();ctx.rect(156,80,288,256);ctx.stroke();
+    ctx.strokeStyle='#e8f4ff';ctx.lineWidth=1.5;
+    drawDimArrow(ctx,140,355,460,355,dims||'~120cm W');
+    drawDimArrow(ctx,80,80,80,336,'~180cm H',true);
+
+  } else {
+    // Generic elegant form
+    ctx.beginPath(); ctx.rect(160,160,280,168); ctx.fill(); ctx.stroke();
+    [[175,328],[415,328]].forEach(([x,y])=>{ctx.beginPath();ctx.rect(x,y,18,72);ctx.fill();ctx.stroke();});
+    ctx.setLineDash([4,4]); ctx.strokeStyle='rgba(200,230,255,0.25)';
+    ctx.beginPath(); ctx.rect(170,170,260,148); ctx.stroke();
+    ctx.setLineDash([]); ctx.strokeStyle='#e8f4ff';
+    drawDimArrow(ctx,160,355,440,355,dims||'~120cm W');
+  }
+
+  // Title block — bottom right corner
+  ctx.strokeStyle='rgba(100,160,220,0.4)'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.rect(W-200,H-56,192,48); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(W-200,H-36); ctx.lineTo(W-8,H-36); ctx.stroke();
+  ctx.fillStyle='rgba(100,180,220,0.7)'; ctx.font='bold 9px monospace'; ctx.textAlign='left';
+  ctx.fillText('DESIGN ELEVATION · 1:20', W-194, H-42);
+  ctx.fillStyle='rgba(255,255,255,0.85)'; ctx.font='italic 11px Georgia,serif';
+  const shortName = name.length>28 ? name.slice(0,27)+'…' : name;
+  ctx.fillText(shortName, W-194, H-20);
+
+  // Accent colour chips — top left
+  [c1,c2,c3].forEach((c,i)=>{
+    ctx.fillStyle = c; ctx.fillRect(16, 16+i*22, 36, 16);
+    ctx.strokeStyle='rgba(255,255,255,0.2)'; ctx.lineWidth=0.5; ctx.strokeRect(16,16+i*22,36,16);
+  });
+  ctx.fillStyle='rgba(100,180,220,0.6)'; ctx.font='8px monospace'; ctx.textAlign='left';
+  ctx.fillText('PALETTE', 58, 27);
+}
+
+function drawDimArrow(ctx, x1, y1, x2, y2, label, vertical) {
+  ctx.strokeStyle='rgba(100,200,255,0.5)'; ctx.lineWidth=0.8; ctx.setLineDash([2,3]);
+  ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+  ctx.setLineDash([]);
+  // Ticks
+  if (vertical) {
+    ctx.beginPath(); ctx.moveTo(x1-5,y1); ctx.lineTo(x1+5,y1); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x1-5,y2); ctx.lineTo(x1+5,y2); ctx.stroke();
+  } else {
+    ctx.beginPath(); ctx.moveTo(x1,y1-5); ctx.lineTo(x1,y1+5); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x2,y2-5); ctx.lineTo(x2,y2+5); ctx.stroke();
+  }
+  ctx.fillStyle='rgba(100,200,255,0.75)'; ctx.font='8px monospace'; ctx.textAlign='center';
+  if (vertical) {
+    ctx.save(); ctx.translate(x1-18,(y1+y2)/2); ctx.rotate(-Math.PI/2); ctx.fillText(label,0,0); ctx.restore();
+  } else {
+    ctx.fillText(label,(x1+x2)/2,y1+14);
+  }
+}
+
+// ── Panel 2: Colour & Material Board ─────────────────────
+function drawMaterialBoard(canvas, c1, c2, c3, matNames, coloursData) {
+  const W = 600, H = 420;
+  const ctx = setupCanvas(canvas, W, H);
+
+  // Warm paper
+  ctx.fillStyle = '#f4ede0'; ctx.fillRect(0,0,W,H);
+  // Subtle paper grain
+  ctx.globalAlpha = 0.018;
+  for (let i=0;i<3000;i++){ctx.fillStyle=Math.random()>.5?'#000':'#8b7355';ctx.fillRect(Math.random()*W,Math.random()*H,1,1);}
+  ctx.globalAlpha = 1;
+
+  // Header rule
+  ctx.strokeStyle='#c8b89a'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(28,52); ctx.lineTo(W-28,52); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(28,54); ctx.lineTo(W-28,54); ctx.stroke();
+
+  // Header text
+  ctx.fillStyle='#3a2e20'; ctx.font='700 10px "DM Sans",sans-serif'; ctx.textAlign='left';
+  ctx.fillText('COLOUR  &  MATERIAL  STUDY', 28, 42);
+  ctx.fillStyle='#9a8a78'; ctx.font='8px monospace';
+  ctx.fillText('OWLDESIGN  ·  AI DESIGN STUDIO', W-28-140, 42);
+
+  // ── 3 colour swatches ──
+  const swW = 160, swH = 130, swGap = 18;
+  const swStartX = (W - 3*swW - 2*swGap) / 2;
+  const cols = [c1,c2,c3];
+  const colNames = coloursData.map(c=>c.name||'');
+  const colUses  = coloursData.map(c=>c.use||'');
+
+  cols.forEach((col, i) => {
+    const x = swStartX + i*(swW+swGap), y = 70;
+    // Shadow
+    ctx.fillStyle='rgba(0,0,0,0.08)'; ctx.fillRect(x+4,y+4,swW,swH);
+    // Swatch
+    ctx.fillStyle = col; ctx.fillRect(x,y,swW,swH);
+    // Sheen overlay
+    const sh = ctx.createLinearGradient(x,y,x+swW,y+swH);
+    sh.addColorStop(0,'rgba(255,255,255,0.18)'); sh.addColorStop(0.4,'rgba(255,255,255,0)');
+    sh.addColorStop(1,'rgba(0,0,0,0.1)');
+    ctx.fillStyle=sh; ctx.fillRect(x,y,swW,swH);
+    // Border
+    ctx.strokeStyle='rgba(0,0,0,0.12)'; ctx.lineWidth=1; ctx.strokeRect(x,y,swW,swH);
+    // Colour name label
+    ctx.fillStyle='#3a2e20'; ctx.font='600 10px "DM Sans",sans-serif'; ctx.textAlign='left';
+    const cname = (colNames[i]||col).slice(0,20);
+    ctx.fillText(cname, x, y+swH+16);
+    // Hex chip
+    ctx.fillStyle='#3a2e20'; ctx.fillRect(x,y+swH+22,48,13);
+    ctx.fillStyle='#f4ede0'; ctx.font='7px monospace'; ctx.textAlign='center';
+    ctx.fillText(col.toUpperCase(), x+24, y+swH+31);
+    // Use note
+    ctx.fillStyle='#9a8a78'; ctx.font='8px "DM Sans",sans-serif'; ctx.textAlign='left';
+    const useNote = (colUses[i]||'').slice(0,24);
+    ctx.fillText(useNote, x, y+swH+46);
+  });
+
+  // ── Material strips ──
+  const stripY = 265, stripH = 68;
+  const stripW = (W - 56 - 2*swGap) / 3;
+  ctx.fillStyle='#3a2e20'; ctx.font='700 9px "DM Sans",sans-serif'; ctx.textAlign='left';
+  ctx.fillText('MATERIAL  PALETTE', 28, stripY - 10);
+  ctx.strokeStyle='#c8b89a'; ctx.lineWidth=0.5;
+  ctx.beginPath(); ctx.moveTo(28,stripY-4); ctx.lineTo(160,stripY-4); ctx.stroke();
+
+  const tierLabels = ['PRIMARY','SECONDARY','ACCENT'];
+  matNames.slice(0,3).forEach((name,i) => {
+    const x = 28 + i*(stripW+swGap), y = stripY;
+    // Strip base
+    ctx.fillStyle='#ebe0ce'; ctx.fillRect(x,y,stripW,stripH);
+    // Tinted overlay using palette colour
+    const sc = cols[i];
+    ctx.fillStyle = hexToRgba(sc,0.12); ctx.fillRect(x,y,stripW,stripH);
+    // Wood-grain lines
+    ctx.strokeStyle = hexToRgba(sc,0.25); ctx.lineWidth=0.8;
+    for(let g=0;g<12;g++){
+      const gy = y+4+g*(stripH/12);
+      ctx.beginPath(); ctx.moveTo(x,gy); ctx.bezierCurveTo(x+stripW*0.3,gy+(Math.random()*3-1.5),x+stripW*0.7,gy+(Math.random()*3-1.5),x+stripW,gy); ctx.stroke();
+    }
+    // Border
+    ctx.strokeStyle='rgba(0,0,0,0.1)'; ctx.lineWidth=1; ctx.strokeRect(x,y,stripW,stripH);
+    // Tier badge
+    ctx.fillStyle = hexToRgba(sc,0.85); ctx.fillRect(x,y,stripW,14);
+    ctx.fillStyle='#fff'; ctx.font='bold 7px monospace'; ctx.textAlign='center';
+    ctx.fillText(tierLabels[i], x+stripW/2, y+10);
+    // Name
+    ctx.fillStyle='#3a2e20'; ctx.font='500 9px "DM Sans",sans-serif';
+    const matLabel = name.length>22?name.slice(0,21)+'…':name;
+    ctx.fillText(matLabel, x+stripW/2, y+stripH+14);
+  });
+
+  // Footer rule + watermark
+  ctx.strokeStyle='#c8b89a'; ctx.lineWidth=0.5;
+  ctx.beginPath(); ctx.moveTo(28,H-22); ctx.lineTo(W-28,H-22); ctx.stroke();
+  ctx.fillStyle='#c8b89a'; ctx.font='7px monospace'; ctx.textAlign='center';
+  ctx.fillText('MATERIAL SPECIFICATION  ·  FOR DESIGN REFERENCE ONLY', W/2, H-10);
+}
+
+// ── Panel 3: Room study with perspective ─────────────────
+function drawRoomStudy(canvas, dtype, c1, c2, c3, style) {
+  const W = 600, H = 420;
+  const ctx = setupCanvas(canvas, W, H);
+
+  const VP = { x:300, y:180 }; // vanishing point
+
+  // Sky/ceiling gradient
+  const ceil = ctx.createLinearGradient(0,0,0,VP.y);
+  ceil.addColorStop(0,'#e2dbd0'); ceil.addColorStop(1,'#d8d0c4');
+  ctx.fillStyle=ceil; ctx.fillRect(0,0,W,VP.y);
+
+  // Back wall
+  const wall = ctx.createLinearGradient(0,VP.y,0,340);
+  wall.addColorStop(0,'#ddd5c8'); wall.addColorStop(1,'#cfc7ba');
+  ctx.fillStyle=wall; ctx.fillRect(0,VP.y,W,340-VP.y);
+
+  // Floor
+  const floor = ctx.createLinearGradient(0,340,0,H);
+  floor.addColorStop(0,'#c2b9aa'); floor.addColorStop(1,'#b0a898');
+  ctx.fillStyle=floor; ctx.fillRect(0,340,W,H-340);
+
+  // Perspective lines from vanishing point
+  ctx.strokeStyle='rgba(0,0,0,0.05)'; ctx.lineWidth=1;
+  [0,W/4,W/2,3*W/4,W].forEach(x=>{
+    ctx.beginPath(); ctx.moveTo(VP.x,VP.y); ctx.lineTo(x,H); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(VP.x,VP.y); ctx.lineTo(x,0); ctx.stroke();
+  });
+  // Horizon line
+  ctx.strokeStyle='rgba(0,0,0,0.08)'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(0,VP.y); ctx.lineTo(W,VP.y); ctx.stroke();
+  // Floor/wall join
+  ctx.strokeStyle='rgba(0,0,0,0.15)'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(0,340); ctx.lineTo(W,340); ctx.stroke();
+  // Baseboard
+  ctx.fillStyle='#bfb8ac'; ctx.fillRect(0,328,W,12);
+
+  // Floor parquet tiles
+  ctx.strokeStyle='rgba(0,0,0,0.06)'; ctx.lineWidth=0.5;
+  for(let row=0;row<4;row++){
+    for(let col=0;col<6;col++){
+      const tx=col*(W/6), ty=340+row*((H-340)/4);
+      ctx.strokeRect(tx,ty,W/6,(H-340)/4);
+    }
+  }
+
+  // Window — right wall panel
+  ctx.fillStyle='rgba(200,220,240,0.25)'; ctx.fillRect(420,VP.y+10,140,160);
+  ctx.strokeStyle='#c0b8ac'; ctx.lineWidth=2; ctx.strokeRect(420,VP.y+10,140,160);
+  ctx.lineWidth=1; ctx.strokeStyle='#c0b8ac';
+  ctx.beginPath(); ctx.moveTo(490,VP.y+10); ctx.lineTo(490,VP.y+170); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(420,VP.y+90); ctx.lineTo(560,VP.y+90); ctx.stroke();
+  // Soft light shaft
+  const lsh = ctx.createLinearGradient(420,VP.y,150,H);
+  lsh.addColorStop(0,'rgba(255,248,230,0.18)'); lsh.addColorStop(1,'rgba(255,248,230,0)');
+  ctx.fillStyle=lsh;
+  ctx.beginPath(); ctx.moveTo(420,VP.y+10); ctx.lineTo(560,VP.y+10); ctx.lineTo(60,H); ctx.lineTo(-40,H); ctx.closePath();
+  ctx.fill();
+
+  // Rug
+  ctx.save();
+  ctx.fillStyle = hexToRgba(c3,0.2);
+  ctx.beginPath(); ctx.ellipse(230,358,150,22,0,0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle = hexToRgba(c3,0.35); ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.ellipse(230,358,142,18,0,0,Math.PI*2); ctx.stroke();
+  ctx.strokeStyle = hexToRgba(c3,0.2); ctx.lineWidth=0.8;
+  ctx.beginPath(); ctx.ellipse(230,358,120,14,0,0,Math.PI*2); ctx.stroke();
+  ctx.restore();
+
+  // ── Furniture ──
+  ctx.shadowColor='rgba(0,0,0,0.25)'; ctx.shadowBlur=18; ctx.shadowOffsetY=6;
+
+  const isChair = /chair|sofa|seat|stool|bench/.test(dtype);
+  const isTable = /table|desk/.test(dtype);
+  const isBed   = /bed/.test(dtype);
+
+  if (isChair) {
+    // Legs
+    ctx.fillStyle=c3; [[165,254],[285,254]].forEach(([x,y])=>{ctx.fillRect(x,y,11,86);});
+    // Seat
+    ctx.fillStyle=c1; roundRect(ctx,150,240,150,18,3); ctx.fill();
+    // Back
+    ctx.fillStyle=c2; roundRect(ctx,158,170,134,74,4); ctx.fill();
+    // Cushion detail
+    ctx.fillStyle='rgba(255,255,255,0.07)'; roundRect(ctx,164,176,122,62,3); ctx.fill();
+    // Armrests
+    ctx.fillStyle=c3; roundRect(ctx,143,204,14,46,2); ctx.fill(); roundRect(ctx,293,204,14,46,2); ctx.fill();
+  } else if (isTable) {
+    // Legs
+    ctx.fillStyle=c3; [[120,242],[338,242]].forEach(([x,y])=>{ctx.fillRect(x,y,13,98);});
+    ctx.fillRect(133,298,218,9); // stretcher
+    // Top
+    ctx.fillStyle=c1; roundRect(ctx,108,226,256,18,3); ctx.fill();
+    // Surface reflection
+    const refl=ctx.createLinearGradient(108,226,108,244);
+    refl.addColorStop(0,'rgba(255,255,255,0.14)'); refl.addColorStop(1,'rgba(255,255,255,0)');
+    ctx.fillStyle=refl; roundRect(ctx,108,226,256,18,3); ctx.fill();
+    // Items on table
+    ctx.shadowBlur=4;
+    ctx.fillStyle=hexToRgba(c2,0.75); roundRect(ctx,195,208,46,18,3); ctx.fill();
+    ctx.fillStyle=hexToRgba(c3,0.6); ctx.beginPath(); ctx.arc(280,218,13,0,Math.PI*2); ctx.fill();
+  } else if (isBed) {
+    ctx.fillStyle=c2; roundRect(ctx,75,238,290,82,5); ctx.fill();
+    ctx.fillStyle=c1; roundRect(ctx,75,158,290,84,6); ctx.fill();
+    ctx.fillStyle='rgba(245,240,232,0.92)'; roundRect(ctx,83,214,274,28,3); ctx.fill();
+    ctx.fillStyle='#f8f4ee'; roundRect(ctx,92,170,90,38,6); ctx.fill(); roundRect(ctx,188,170,90,38,6); ctx.fill();
+    ctx.fillStyle=hexToRgba(c3,0.4); roundRect(ctx,83,214,274,12,2); ctx.fill();
+  } else {
+    ctx.fillStyle=c2; ctx.fillRect(140,100,16,240); ctx.fillRect(394,100,16,240);
+    [100,158,216,274].forEach(y=>{ctx.fillStyle=c1;roundRect(ctx,140,y,270,14,2);ctx.fill();});
+    ctx.fillStyle=hexToRgba(c3,0.5);
+    [[168,112,18,14],[220,112,12,14],[276,112,24,14]].forEach(([x,y,w,h])=>{roundRect(ctx,x,y,w,h,2);ctx.fill();});
+  }
+
+  ctx.shadowBlur=0; ctx.shadowOffsetY=0;
+
+  // Tall plant — left side
+  ctx.fillStyle='#4a6a3a'; ctx.fillRect(46,252,7,88);
+  const leaves=[['#3d7a2e',44,218,24,18,-0.4],['#4a8e38',58,230,20,16,0.3],['#3a6e28',42,242,22,14,0.6],['#5a9a42',60,248,16,12,-0.2]];
+  leaves.forEach(([col,x,y,rx,ry,rot])=>{
+    ctx.fillStyle=col; ctx.save(); ctx.translate(x,y); ctx.rotate(rot);
+    ctx.beginPath(); ctx.ellipse(0,0,rx,ry,0,0,Math.PI*2); ctx.fill(); ctx.restore();
+  });
+
+  // Style tag — bottom right
+  ctx.fillStyle='rgba(0,0,0,0.0)'; ctx.fillRect(W-130,H-26,122,18);
+  ctx.fillStyle='rgba(80,60,40,0.3)'; ctx.font='italic 10px Georgia,serif'; ctx.textAlign='right';
+  ctx.fillText(style, W-16, H-12);
+}
+
+// Utility: safe hex → rgba, handles named colours / short hex / malformed
+function hexToRgba(hex, alpha) {
+  if (!hex || typeof hex !== 'string') return 'rgba(136,136,136,'+alpha+')';
+  hex = hex.trim();
+  if (/^#[0-9a-fA-F]{3}$/.test(hex)) hex = '#'+hex[1]+hex[1]+hex[2]+hex[2]+hex[3]+hex[3];
+  if (!/^#[0-9a-fA-F]{6}$/.test(hex)) return 'rgba(136,136,136,'+alpha+')';
+  const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+  if (isNaN(r)||isNaN(g)||isNaN(b)) return 'rgba(136,136,136,'+alpha+')';
+  return 'rgba('+r+','+g+','+b+','+alpha+')';
+}
+
+// Utility: sanitise — always returns valid #RRGGBB or fallback
+function safeHex(val, fallback) {
+  if (!val || typeof val !== 'string') return fallback;
+  val = val.trim();
+  if (/^#[0-9a-fA-F]{3}$/.test(val)) val = '#'+val[1]+val[1]+val[2]+val[2]+val[3]+val[3];
+  return /^#[0-9a-fA-F]{6}$/.test(val) ? val : fallback;
+}
+
+// Utility: rounded rect path
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x+r, y);
+  ctx.lineTo(x+w-r, y); ctx.arcTo(x+w,y,x+w,y+r,r);
+  ctx.lineTo(x+w,y+h-r); ctx.arcTo(x+w,y+h,x+w-r,y+h,r);
+  ctx.lineTo(x+r,y+h); ctx.arcTo(x,y+h,x,y+h-r,r);
+  ctx.lineTo(x,y+r); ctx.arcTo(x,y,x+r,y,r);
+  ctx.closePath();
+}
+
+// ─── Helpers ──────────────────────────────────────────────
+function escapeHtml(s) {
+  return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function copyMjPrompt() {
+  navigator.clipboard.writeText(currentMjPrompt);
+  const btn = document.querySelector('.mj-copy');
+  const orig = btn.textContent;
+  btn.textContent = '✓ Copied';
+  setTimeout(() => btn.textContent = orig, 2000);
+}
+
+function copyPitchWa(btn) {
+  copyToClipboard(window._pitchWa || '', btn);
+}
+function copyPitchEmail(btn) {
+  copyToClipboard(window._pitchEmail || '', btn);
+}
+function copyToClipboard(text, btn) {
+  navigator.clipboard.writeText(text);
+  const orig = btn.textContent;
+  btn.textContent = '✓ Copied!';
+  btn.style.color = 'var(--teal)';
+  btn.style.borderColor = 'var(--teal)';
+  setTimeout(() => { btn.textContent = orig; btn.style.color = ''; btn.style.borderColor = ''; }, 2000);
+}
+
+function resetStudio() {
+  currentDesignData = null;
+  document.getElementById('output-sections').style.display = 'none';
+  document.getElementById('output-placeholder').style.display = 'flex';
+  document.getElementById('output-placeholder').innerHTML = `<div class="placeholder-owl">✦</div><div class="placeholder-text">Fill the brief and generate your design concept</div>`;
+  document.getElementById('participant-select').value = '0';
+  document.getElementById('moodboard-grid').style.display = 'none';
+  window.scrollTo(0, 0);
+}
+
+function downloadBrief() {
+  if (!currentDesignData) return;
+  const d = currentDesignData;
+  const lines = [
+    'OWLDESIGN — AI DESIGN BRIEF',
+    '='.repeat(50),
+    `Concept: ${d.concept.name}`,
+    `Type: ${d.concept.type}`,
+    `Date: ${new Date().toLocaleDateString('en-IN')}`,
+    '='.repeat(50),
+    '',
+    'DESIGN NARRATIVE',
+    d.concept.narrative,
+    '',
+    'DIMENSIONS',
+    d.concept.dimensions,
+    '',
+    'PRODUCTION TIMELINE',
+    d.concept.production_timeline,
+    '',
+    'CLIENT FIT',
+    d.concept.client_fit,
+    '',
+    'SIGNATURE FEATURES',
+    ...(d.features||[]).map(f => `• ${f}`),
+    '',
+    'MATERIALS',
+    ...(d.materials||[]).map(m => `• ${m.tier}: ${m.name} — ${m.detail}`),
+    '',
+    'BILL OF MATERIALS',
+    ['Material','Specification','Qty','Source','Est. Cost','Tier'].join(' | '),
+    ...(d.bom||[]).map(r => [r.material,r.spec,r.qty,r.source,r.cost,r.tier].join(' | ')),
+    `TOTAL: ${d.bom_total}`,
+    '',
+    'COLOURS',
+    ...(d.colours||[]).map(c => `• ${c.name} ${c.hex} — ${c.use}`),
+    '',
+    'MIDJOURNEY PROMPT',
+    d.mj_prompt,
+    '',
+    'PATH TO MARKET',
+    d.path_to_market,
+    '',
+    'CLIENT PITCH',
+    'WhatsApp:',
+    d.whatsapp_msg,
+    '',
+    'Email Subject:',
+    d.email_subject,
+    '',
+    'Email Body:',
+    d.email_body,
+    '',
+    '='.repeat(50),
+    'Powered by OwlDesign · Data Owl',
+  ];
+  const blob = new Blob([lines.join('\n')], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `OwlDesign_${(d.concept.name||'brief').replace(/\s+/g,'_')}.txt`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ─── Init ─────────────────────────────────────────────────
+document.getElementById('pwd-input').addEventListener('keydown', e => { if(e.key==='Enter') handlePwd(); });
+</script>
+</body>
+</html>
